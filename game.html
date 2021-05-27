@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Test Game</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+// setup initial variables
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+
+
+//ball properties
+var ballradius = 10;
+var x = canvas.width/2;
+var y = canvas.height-30;
+var dx = 2;
+var dy = -2;
+var MaxSpeed = 3;
+
+//paddle
+var paddleHeight = 15;
+var paddleWidth = 75;
+var paddleX = (canvas.width-paddleWidth) / 2;
+
+//bricks
+var brickRows = 3;
+var brickCols = 5;
+var brickHP = 2;
+var brickWidth = 75;
+var brickHeight = 20;
+var brickPadding = 10;
+var brickOffsetTop = 30;
+var brickOffsetLeft = 30;
+
+var bricks = [];
+for(var i=0; i<brickCols; i++){
+bricks[i] = [];
+for(var j =0; j < brickRows; j++){
+bricks[i][j] = {x: 0, y: 0, hp: brickHP};
+}
+}
+
+//score
+var score = 0;
+
+
+
+
+//listeners
+var rightPressed = false;
+var leftPressed = false;
+
+function draw(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+	drawBricks();
+    drawBall();
+    drawPaddle();
+	drawScore();
+	collisionDetection();
+    
+    if(x + dx > canvas.width-ballradius || x + dx < ballradius) {
+        dx = -dx;
+    }
+    if(y + dy < ballradius) {
+        dy = -dy;
+    }
+    else if(y + dy > canvas.height-ballradius) {
+        if(x > paddleX && x < paddleX + paddleWidth) {
+		if(Math.abs(1.1*dy) > MaxSpeed){
+		dy = -dy; // dont change speed
+		dx = dx; // dont change speed 
+		} else {
+            dy = -1.1*dy; // make ball go faster
+			dx = 1.1*dx;  // make ball go faster
+        }
+		}
+        else {
+            alert("GAME OVER, SCORE: " + score);
+            document.location.reload();
+            clearInterval(interval);
+        }
+    }
+    
+    if(rightPressed && paddleX < canvas.width-paddleWidth) {
+        paddleX += 7;
+    }
+    else if(leftPressed && paddleX > 0) {
+        paddleX -= 7;
+    }
+    
+    x += dx;
+    y += dy;
+}
+
+
+function drawBall(){
+ctx.beginPath();
+ctx.arc(x, y, ballradius, 0, Math.PI*2);
+ctx.fillStyle = "#0095DD";
+ctx.fill();
+ctx.closePath();
+
+}
+
+function drawPaddle() {
+    ctx.beginPath();
+    ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+    ctx.fillStyle = "#0095DD";
+    ctx.fill();
+    ctx.closePath();
+}
+
+function drawBricks() {
+    for(var c=0; c<brickCols; c++) {
+        for(var r=0; r<brickRows; r++) {
+		if(bricks[c][r].hp > 0){
+		    var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+            bricks[c][r].x = brickX;
+            bricks[c][r].y = brickY;
+            ctx.beginPath();
+            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+			if(bricks[c][r].hp >= 3){
+			ctx.fillStyle = "#00FF00";
+			} else if(bricks[c][r].hp == 2){
+			ctx.fillStyle = "#00FFCC";
+			}else {
+			ctx.fillStyle = "#00CCFF";
+			}
+            ctx.fill();
+            ctx.closePath();
+			}
+        }
+    }
+}
+
+
+
+
+function keyDownHandler(e) {
+    if(e.key == "Right" || e.key == "ArrowRight") {
+        rightPressed = true;
+    }
+    else if(e.key == "Left" || e.key == "ArrowLeft") {
+        leftPressed = true;
+    }
+}
+function keyUpHandler(e) {
+    if(e.key == "Right" || e.key == "ArrowRight") {
+        rightPressed = false;
+    }
+    else if(e.key == "Left" || e.key == "ArrowLeft") {
+        leftPressed = false;
+}
+}
+
+function collisionDetection() {
+    for(var c=0; c<brickCols; c++) {
+        for(var r=0; r<brickRows; r++) {
+            var b = bricks[c][r];
+			
+			if(b.hp > 0){	
+            if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
+                dy = -dy;
+				--b.hp;
+				if(b.hp == 0){
+				score++;
+				if(score == brickRows*brickCols){
+				alert("YOU WIN, SCORE: " + score);
+				document.location.reload();
+				clearInterval(interval);
+				}
+        }
+    }
+}    
+}
+}
+}
+
+function drawScore() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.fillText("Score: "+score, 8, 20);
+}
+
+document.addEventListener("keydown", keyDownHandler, false);
+document.addEventListener("keyup", keyUpHandler, false);
+var interval = setInterval(draw, 10);
+</script>
+
+</body>
+</html>
